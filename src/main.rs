@@ -7,6 +7,7 @@ use std::collections::HashMap;
 mod complex;
 mod drawings;
 mod fourier;
+mod lerp;
 
 const DT: f32 = 0.001;
 fn main() {

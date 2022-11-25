@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use super::Complex;
-use lerp::Lerp;
+use crate::lerp::Lerp;
 use nannou::prelude::*;
 
 const AMOUNT_OF_ARROOWS: i32 = 300;
@@ -12,7 +12,7 @@ fn calculate_nth_c(f: &'static [Complex], frequency: i32) -> Complex {
     while t <= 1.0 {
         let current_f: Complex = access_drawing_at_t(f, t);
         let c = Complex::polar(1.0, 2.0 * PI * (frequency as f32) * t * -1.0);
-        sum = sum.add(c.mult(current_f).scale(DT_INTEGRAL));
+        sum += c * (current_f * DT_INTEGRAL);
         t += DT_INTEGRAL;
     }
 
@@ -36,11 +36,9 @@ pub fn calculate_arrows(cs: &HashMap<i32, Complex>, t: f32) -> (Vec<Complex>, Co
             .map(|v| vec![v, -v])
             .flatten()
             .map(|v| {
-                let res = cs
-                    .get(&v)
-                    .unwrap()
-                    .mult(Complex::polar(1.0, 2.0 * PI * v as f32 * t));
-                sum = sum.add(res);
+                let c = *(cs.get(&v).unwrap());
+                let res = c * Complex::polar(1.0, 2.0 * PI * v as f32 * t);
+                sum += res;
                 res
             })
             .collect(),
@@ -52,7 +50,7 @@ pub fn arrows(draw: &Draw, waves: &Vec<Complex>) {
     let mut sum = Complex { re: 0.0, img: 0.0 };
     waves.iter().for_each(|v| {
         let prev = sum;
-        sum = sum.add(*(v));
+        sum += *(v);
 
         // draw.ellipse()
         //     .width(v.mag() * 2.0)

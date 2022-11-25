@@ -1,4 +1,5 @@
-use lerp::Lerp;
+use std::ops::{Add, AddAssign, Mul};
+
 use nannou::prelude::Vec2;
 
 #[derive(Clone, Copy)]
@@ -20,25 +21,35 @@ impl Complex {
             img: theta.sin() * r,
         }
     }
-    pub fn add(self, other: Complex) -> Complex {
-        Complex {
-            re: other.re + self.re,
-            img: other.img + self.img,
-        }
-    }
-
-    pub fn mult(self, other: Complex) -> Complex {
-        Complex {
-            re: self.re * other.re - self.img * other.img,
-            img: self.re * other.img + self.img * other.re,
-        }
-    }
-
     pub fn mag(self) -> f32 {
         f32::hypot(self.img, self.re)
     }
+}
 
-    pub fn scale(self, n: f32) -> Complex {
+impl Add<Complex> for Complex {
+    fn add(self, other: Complex) -> Self::Output {
+        Complex {
+            re: self.re + other.re,
+            img: self.img + other.img,
+        }
+    }
+
+    type Output = Complex;
+}
+
+impl AddAssign<Complex> for Complex {
+    fn add_assign(&mut self, other: Complex) {
+        let sum = other + *self;
+        self.re = sum.re;
+        self.img = sum.img;
+    }
+}
+
+impl Mul<f32> for Complex {
+    type Output = Complex;
+
+    //Scale
+    fn mul(self, n: f32) -> Self::Output {
         Complex {
             re: self.re * n,
             img: self.img * n,
@@ -46,11 +57,14 @@ impl Complex {
     }
 }
 
-impl Lerp<f32> for Complex {
-    fn lerp(self, other: Self, t: f32) -> Self {
+impl Mul<Complex> for Complex {
+    type Output = Complex;
+
+    //Complex multiplication
+    fn mul(self, other: Complex) -> Self::Output {
         Complex {
-            img: self.img.lerp(other.img, t),
-            re: self.re.lerp(other.re, t),
+            re: self.re * other.re - self.img * other.img,
+            img: self.re * other.img + self.img * other.re,
         }
     }
 }
