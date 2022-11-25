@@ -1,6 +1,7 @@
 use complex::Complex;
-use drawings::fourier_portrait;
 use nannou::prelude::*;
+use nannou_egui::{egui, Egui};
+
 use std::collections::HashMap;
 
 mod complex;
@@ -13,6 +14,7 @@ fn main() {
 }
 
 struct Model {
+    egui: Egui,
     _window: window::Id,
     t: f32,
     cs: HashMap<i32, Complex>,
@@ -25,19 +27,52 @@ fn model(app: &App) -> Model {
         .new_window()
         .view(view)
         .maximized(true)
+        .raw_event(raw_window_event)
         .title("fourier")
         .build()
         .unwrap();
+
+    let egui = Egui::from_window(&app.window(_window).unwrap());
     Model {
+        egui,
         _window,
         t: DT,
-        cs: fourier::calculate_cs(Vec::from(fourier_portrait())),
+        cs: fourier::calculate_cs(drawings::FOURIER_PORTRAIT),
         path: Vec::new(),
         arrows: Vec::new(),
     }
 }
 
-fn update(_app: &App, model: &mut Model, _update: Update) {
+fn raw_window_event(_app: &App, model: &mut Model, event: &nannou::winit::event::WindowEvent) {
+    model.egui.handle_raw_event(event);
+}
+
+fn update(app: &App, model: &mut Model, _update: Update) {
+    model.egui.set_elapsed_time(_update.since_start);
+    let ctx = model.egui.begin_frame();
+
+    egui::Window::new("Settings").show(&ctx, |ui| {
+        ui.label("Drawing");
+        for drawing in drawings::DRAWINGS {
+            let btn = ui.button(drawing.title);
+            if btn.clicked() {
+                model.cs = fourier::calculate_cs(drawing.points);
+                model.path.clear();
+                model.t = DT;
+            }
+        }
+
+        ui.label("Actions");
+        let reset = ui.button("Reset");
+        if reset.clicked() {
+            model.t = DT;
+            let (arrows, _) = fourier::calculate_arrows(&model.cs, model.t);
+            model.arrows = arrows;
+            model.path.clear()
+        }
+    });
+
+    if app.keys.down.contains(&Key::R) {}
     if model.t >= 1.0 {
         model.t = DT;
     } else {
@@ -60,9 +95,10 @@ fn view(app: &App, model: &Model, frame: Frame) {
             model
                 .path
                 .iter()
-                .map(|v| -> Vec2 { Complex::into(v.clone()) }),
+                .map(|v| -> Vec2 { Vec2::new(v.re, v.img) }),
         )
         .color(GREEN);
 
-    draw.to_frame(app, &frame).unwrap()
+    draw.to_frame(app, &frame).unwrap();
+    model.egui.draw_to_frame(&frame).unwrap();
 }
