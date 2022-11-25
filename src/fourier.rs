@@ -6,7 +6,7 @@ use nannou::prelude::*;
 
 const AMOUNT_OF_ARROOWS: i32 = 300;
 const DT_INTEGRAL: f32 = 0.00001;
-fn calculate_nth_c(f: &Vec<Complex>, frequency: i32) -> Complex {
+fn calculate_nth_c(f: &'static [Complex], frequency: i32) -> Complex {
     let mut sum = Complex { re: 0.0, img: 0.0 };
     let mut t = DT_INTEGRAL;
     while t <= 1.0 {
@@ -19,7 +19,7 @@ fn calculate_nth_c(f: &Vec<Complex>, frequency: i32) -> Complex {
     sum
 }
 
-fn access_drawing_at_t(f: &Vec<Complex>, t: f32) -> Complex {
+fn access_drawing_at_t(f: &'static [Complex], t: f32) -> Complex {
     let index = Lerp::lerp(0.0, (f.len() - 1) as f32, t).floor() as usize;
     let current_f = f.get(index).unwrap();
     let next_f = f.get(index + 1).unwrap_or(current_f);
@@ -72,8 +72,8 @@ pub fn arrows(draw: &Draw, waves: &Vec<Complex>) {
     });
 }
 
-pub fn calculate_cs(drawing: Vec<Complex>) -> HashMap<i32, Complex> {
+pub fn calculate_cs(drawing: &'static [Complex]) -> HashMap<i32, Complex> {
     (-AMOUNT_OF_ARROOWS..=AMOUNT_OF_ARROOWS)
-        .map(|n| (n, calculate_nth_c(&drawing, n)))
+        .map(|n| (n, calculate_nth_c(drawing, n)))
         .collect()
 }
