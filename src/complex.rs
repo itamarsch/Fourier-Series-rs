@@ -20,25 +20,25 @@ impl Complex {
             img: theta.sin() * r,
         }
     }
-    pub fn add(&self, other: &Complex) -> Complex {
+    pub fn add(self, other: Complex) -> Complex {
         Complex {
             re: other.re + self.re,
             img: other.img + self.img,
         }
     }
 
-    pub fn mult(&self, other: &Complex) -> Complex {
+    pub fn mult(self, other: Complex) -> Complex {
         Complex {
             re: self.re * other.re - self.img * other.img,
             img: self.re * other.img + self.img * other.re,
         }
     }
 
-    pub fn mag(&self) -> f32 {
+    pub fn mag(self) -> f32 {
         f32::hypot(self.img, self.re)
     }
 
-    pub fn scale(&self, n: f32) -> Complex {
+    pub fn scale(self, n: f32) -> Complex {
         Complex {
             re: self.re * n,
             img: self.img * n,
