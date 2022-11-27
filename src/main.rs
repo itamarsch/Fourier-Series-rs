@@ -2,7 +2,7 @@ use complex::Complex;
 use nannou::prelude::*;
 use nannou_egui::{egui, Egui};
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 mod complex;
 mod drawings;
@@ -19,7 +19,7 @@ struct Model {
     _window: window::Id,
     t: f32,
     cs: HashMap<i32, Complex>,
-    path: Vec<Complex>,
+    path: VecDeque<Complex>,
     arrows: Vec<Complex>,
 }
 
@@ -39,7 +39,7 @@ fn model(app: &App) -> Model {
         _window,
         t: DT,
         cs: fourier::calculate_cs(drawings::FOURIER_PORTRAIT),
-        path: Vec::new(),
+        path: VecDeque::new(),
         arrows: Vec::new(),
     }
 }
@@ -48,20 +48,23 @@ fn raw_window_event(_app: &App, model: &mut Model, event: &nannou::winit::event:
     model.egui.handle_raw_event(event);
 }
 
-fn update(app: &App, model: &mut Model, _update: Update) {
+fn update(_app: &App, model: &mut Model, _update: Update) {
     model.egui.set_elapsed_time(_update.since_start);
     let ctx = model.egui.begin_frame();
 
     egui::Window::new("Settings").show(&ctx, |ui| {
         ui.label("Drawing");
-        for drawing in drawings::DRAWINGS {
-            let btn = ui.button(drawing.title);
-            if btn.clicked() {
-                model.cs = fourier::calculate_cs(drawing.points);
-                model.path.clear();
-                model.t = DT;
+
+        ui.horizontal(|ui| {
+            for drawing in drawings::DRAWINGS {
+                let btn = ui.button(drawing.title);
+                if btn.clicked() {
+                    model.cs = fourier::calculate_cs(drawing.points);
+                    model.path.clear();
+                    model.t = DT;
+                }
             }
-        }
+        });
 
         ui.label("Actions");
         let reset = ui.button("Reset");
@@ -73,13 +76,16 @@ fn update(app: &App, model: &mut Model, _update: Update) {
         }
     });
 
-    if app.keys.down.contains(&Key::R) {}
+    if model.path.len() > (1.0 / DT) as usize {
+        model.path.pop_front();
+    }
+
     if model.t >= 1.0 {
         model.t = DT;
     } else {
         let (arrows, sum) = fourier::calculate_arrows(&model.cs, model.t);
         model.arrows = arrows;
-        model.path.push(sum);
+        model.path.push_back(sum);
         model.t += DT;
     }
 }
